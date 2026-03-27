@@ -73,7 +73,7 @@ def train_model(config):
     train_dataloader, eval_dataloader, tokenizer_src, tokenizer_tgt = get_data(config)
     model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr = config['lr'], eps = 1e-9)
-    loss_function = nn.CrossEntropyLoss(ignore_index=tokenizer_src.token_to_id("[PAD]"), label_smoothing=0.1) #Label_smoothing is activated
+    loss_function = nn.CrossEntropyLoss(ignore_index=tokenizer_tgt.token_to_id("[PAD]"), label_smoothing=0.1) #Label_smoothing is activated
 
     initial_epoch = 0
     global_step = 0

@@ -50,8 +50,8 @@ class layerNorm(nn.Module):
     def __init__(self,d_model = 512):
         super().__init__()
         self.eps = 10**-6
-        self.gamma = nn.Parameter(torch.randn(d_model))
-        self.beta = nn.Parameter(torch.randn(d_model))
+        self.gamma = nn.Parameter(torch.ones(d_model))
+        self.beta = nn.Parameter(torch.zeros(d_model))
 
     def forward(self, x):
         mean = x.mean(dim=2, keepdim=True) #Size (batch, input_seq, 1)
@@ -192,7 +192,7 @@ class ProjectionLayer(nn.Module):
         self.Proj = nn.Linear(d_model, vocab_size)
 
     def forward(self, x):
-        return torch.log_softmax(self.Proj(x), dim = -1)
+        return self.Proj(x)
 
 class Transformer(nn.Module): 
 
