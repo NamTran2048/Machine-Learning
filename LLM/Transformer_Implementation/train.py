@@ -32,8 +32,9 @@ def buildTokenizer(config, dataset, language):
 
 def get_data(config):
     dataset = load_dataset('opus_books', f'{config["lang_src"]}-{config["lang_tgt"]}', split = "train")
-    print(dataset)
-    tokenizer_src = buildTokenizer(config, dataset, config['lang_src'])
+
+    #Creates tokenizer from function buildTokenizer
+    tokenizer_src = buildTokenizer(config, dataset, config['lang_src']) 
     tokenizer_tgt = buildTokenizer(config, dataset, config['lang_tgt'])
 
     #Keep 90% for training, 10% for validation
@@ -47,15 +48,7 @@ def get_data(config):
     dataset_train = TransformerDataset(dataset_train_raw, tokenizer_src, tokenizer_tgt, config["lang_src"], config["lang_tgt"], config["seq_len"])
     dataset_eval = TransformerDataset(dataset_eval_raw, tokenizer_src, tokenizer_tgt, config["lang_src"], config["lang_tgt"], config["seq_len"])
 
-
-    max_len_src = 0
-    max_len_tgt = 0
-    for item in dataset:
-        src_ids = tokenizer_src.encode(item['translation'][config['lang_src']]).ids
-        tgt_ids = tokenizer_tgt.encode(item['translation'][config['lang_tgt']]).ids
-        max_len_src = max(max_len_src, len(src_ids))
-        max_len_tgt = max(max_len_tgt, len(tgt_ids))
-
+    #Dataloader
     train_dataloader = DataLoader(dataset_train, batch_size = config['batch_size'], shuffle = True)
     eval_dataloader = DataLoader(dataset_eval, batch_size = 1, shuffle = True)
 

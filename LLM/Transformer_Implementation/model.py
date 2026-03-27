@@ -6,10 +6,6 @@ import math
 
 """
 
-x = torch.tensor([1,2,3])
-
-print(x)
-
 class inputEmbedding(nn.Module):
 
     def __init__(self, d_model, vocab_size): #d_model is 512
