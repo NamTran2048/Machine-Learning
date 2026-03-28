@@ -64,11 +64,11 @@ def train_model(config):
 
     train_dataloader, eval_dataloader, tokenizer_src, tokenizer_tgt = get_data(config)
     model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr= 1.0, eps=1e-9, weight_decay=1e-2)
+    optimizer = torch.optim.AdamW(model.parameters(), lr= 0.5, eps=1e-9, weight_decay=1e-2)
 
     def lr_lambda(step):
         step = max(step, 1)
-        warmup_steps = 4000
+        warmup_steps = 10000
         return (config['d_model'] ** -0.5) * min(step ** -0.5, step * warmup_steps ** -1.5)
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
@@ -78,7 +78,7 @@ def train_model(config):
     initial_epoch = 0
     if config['preload']:
         model_filename = get_weights_file_path(config, config['preload'])
-        state = torch.load(model_filename)
+        state = torch.load(model_filename, map_location=device)
         model.load_state_dict(state['model_state_dict'])
         initial_epoch = state['epoch'] + 1
         optimizer.load_state_dict(state['optimizer_state_dict'])

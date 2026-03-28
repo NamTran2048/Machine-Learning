@@ -124,7 +124,7 @@ class residual(nn.Module):
         self.norm = layerNorm()
 
     def forward(self, x, Sublayer):
-        return x + self.dropout((Sublayer(self.norm(x))))
+        return x + self.dropout((Sublayer(self.norm(x))) * (1/(math.sqrt(12))))
 
 class encoderBlock(nn.Module):
 
@@ -132,7 +132,6 @@ class encoderBlock(nn.Module):
         super().__init__()
         self.attention_block = attention_block
         self.FFN_block = FFN_block
-        self.dropout = dropout
         self.residualConnection = nn.ModuleList([residual(dropout), residual(dropout)])
 
     def forward(self, x, mask):
@@ -159,7 +158,6 @@ class decoderBlock(nn.Module):
         self.attention_block = attention_block
         self.cross_block = cross_attention
         self.FFN_block = FFN_block
-        self.dropout = dropout
         self.norm = layerNorm()
         self.residualConnection = nn.ModuleList([residual(dropout) for _ in range(3)])
 
@@ -217,7 +215,7 @@ class Transformer(nn.Module):
     
 
 
-def Model(encoder_vocab_size, decoder_vocab_size, encoder_seq, decoder_seq, d_model, head = 8, N=6, dropout=0.1):
+def Model(encoder_vocab_size, decoder_vocab_size, encoder_seq, decoder_seq, d_model, head = 8, N=12, dropout=0.1):
     #Embedding
     encoder_embedding = inputEmbedding(d_model, encoder_vocab_size)
     decoder_embedding = inputEmbedding(d_model, decoder_vocab_size)

@@ -32,28 +32,28 @@ def translate(sentence, config):
     text = torch.tensor(tokenizer_src.encode(sentence).ids)
     print(text)
 
-    model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size())
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(device)
 
     model.eval()
     with torch.no_grad():
         #Retrieve latest model
         if (config['preload']):
             model_filename = get_weights_file_path(config, config['preload'])
-            state = torch.load(model_filename)
+            state = torch.load(model_filename, map_location=device)
             model.load_state_dict(state['model_state_dict'])
 
         #Encoder and decoder input/output
-        encoder_input = get_encoder_input(text, tokenizer_src, tokenizer_tgt, text.size(-1))
+        encoder_input = get_encoder_input(text, tokenizer_src, tokenizer_tgt, text.size(-1)).to(device)
         encoder_output = model.encode(encoder_input.unsqueeze(0), None) #No masking, (1, seq)
-        decoder_input = torch.tensor([tokenizer_tgt.token_to_id("[SOS]")], dtype=torch.int64)
+        decoder_input = torch.tensor([tokenizer_tgt.token_to_id("[SOS]")], dtype=torch.int64).to(device)
     
     
 
         #Inference loop
 
         while True:
-            decoder_mask = get_decoder_mask(len(decoder_input))
+            decoder_mask = get_decoder_mask(len(decoder_input)).to(device)
 
             decoder_output = model.decode(decoder_input.unsqueeze(0), encoder_output, None, decoder_mask)
             Proj_output = torch.softmax(model.projectionLayer(decoder_output), dim=-1) #(1,seq,vocab)
@@ -64,13 +64,13 @@ def translate(sentence, config):
             next_token = torch.argmax(output)
             decoder_input = torch.cat([decoder_input, next_token.unsqueeze(0)])
             tokens = [tokenizer_tgt.id_to_token(idx.item()) for idx in decoder_input]
-            print(tokens)
+            print(" ".join(tokens))
 
             if next_token == tokenizer_tgt.token_to_id("[EOS]"):
                 break
 
 
 if __name__ == '__main__':
-    sentence = "How are you alot"
+    sentence = " A man should be independent ."
     config = get_config()
     translate(sentence, config)
