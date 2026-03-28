@@ -62,11 +62,11 @@ class ffn(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(d_model, 4*d_model)
         self.fc2 = nn.Linear(4*d_model, d_model)
-        self.ReLU = nn.ReLU()
+        self.activation = nn.GELU()
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        return self.fc2(self.dropout(self.ReLU(self.fc1(x))))
+        return self.fc2(self.dropout(self.activation(self.fc1(x))))
     
 
 class multiHeadAttention(nn.Module):
@@ -85,7 +85,7 @@ class multiHeadAttention(nn.Module):
         self.wO = nn.Linear(d_model,d_model)
 
     @staticmethod
-    def attention(q, k, v, d_k, mask=None, dropout=None):
+    def attention(q, k, v, d_k, mask=None, dropout=0.05):
             Score = (q @ k.transpose(2,3)) / math.sqrt(d_k)
             if mask is not None:
                 Score = Score.masked_fill(mask == 0, -1e8)

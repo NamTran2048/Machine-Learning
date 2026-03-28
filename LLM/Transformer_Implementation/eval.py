@@ -43,10 +43,10 @@ def translate(sentence, config):
             state = torch.load(model_filename)
             model.load_state_dict(state['model_state_dict'])
 
-            #Encoder and decoder input/output
-            encoder_input = get_encoder_input(text, tokenizer_src, tokenizer_tgt, text.size(-1))
-            encoder_output = model.encode(encoder_input.unsqueeze(0), None) #No masking, (1, seq)
-            decoder_input = torch.tensor([tokenizer_tgt.token_to_id("[SOS]")], dtype=torch.int64)
+        #Encoder and decoder input/output
+        encoder_input = get_encoder_input(text, tokenizer_src, tokenizer_tgt, text.size(-1))
+        encoder_output = model.encode(encoder_input.unsqueeze(0), None) #No masking, (1, seq)
+        decoder_input = torch.tensor([tokenizer_tgt.token_to_id("[SOS]")], dtype=torch.int64)
     
     
 
@@ -59,7 +59,9 @@ def translate(sentence, config):
             Proj_output = torch.softmax(model.projectionLayer(decoder_output), dim=-1) #(1,seq,vocab)
             output = Proj_output[0, -1, :]
 
-            next_token = torch.argmax(output[-1])
+            unk_id = tokenizer_tgt.token_to_id("[UNK]")
+            output[unk_id] = -float('inf')
+            next_token = torch.argmax(output)
             decoder_input = torch.cat([decoder_input, next_token.unsqueeze(0)])
             tokens = [tokenizer_tgt.id_to_token(idx.item()) for idx in decoder_input]
             print(tokens)
@@ -69,6 +71,6 @@ def translate(sentence, config):
 
 
 if __name__ == '__main__':
-    sentence = "I like to eat alot"
+    sentence = "How are you alot"
     config = get_config()
     translate(sentence, config)

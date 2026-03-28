@@ -10,7 +10,6 @@ from pathlib import Path
 from dataset import TransformerDataset, decoder_mask
 
 from model import Model
-from torch.utils.tensorboard import SummaryWriter
 from config import get_weights_file_path, get_config
 
 def get_sentence(dataset, language):
@@ -22,7 +21,7 @@ def buildTokenizer(config, dataset, language):
     if not Path.exists(tokenizer_path):
         tokenizer = Tokenizer(WordLevel(unk_token = '[UNK]'))
         tokenizer.pre_tokenizer = Whitespace()
-        trainer = WordLevelTrainer(special_tokens = ["[UNK]", "[PAD]", "[SOS]", "[EOS]"], min_frequency = 2)
+        trainer = WordLevelTrainer(special_tokens = ["[UNK]", "[PAD]", "[SOS]", "[EOS]"], min_frequency = 1)
         tokenizer.train_from_iterator(get_sentence(dataset, language), trainer=trainer)
         tokenizer.save(str(tokenizer_path))
     else:
@@ -65,18 +64,25 @@ def train_model(config):
 
     train_dataloader, eval_dataloader, tokenizer_src, tokenizer_tgt = get_data(config)
     model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr = config['lr'], eps = 1e-9)
+    optimizer = torch.optim.AdamW(model.parameters(), lr= 1.0, eps=1e-9, weight_decay=1e-2)
+
+    def lr_lambda(step):
+        step = max(step, 1)
+        warmup_steps = 4000
+        return (config['d_model'] ** -0.5) * min(step ** -0.5, step * warmup_steps ** -1.5)
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+
     loss_function = nn.CrossEntropyLoss(ignore_index=tokenizer_tgt.token_to_id("[PAD]"), label_smoothing=0.1) #Label_smoothing is activated
 
     initial_epoch = 0
-    global_step = 0
     if config['preload']:
         model_filename = get_weights_file_path(config, config['preload'])
         state = torch.load(model_filename)
         model.load_state_dict(state['model_state_dict'])
         initial_epoch = state['epoch'] + 1
         optimizer.load_state_dict(state['optimizer_state_dict'])
-        global_step = state['global_step']
+        scheduler.load_state_dict(state['scheduler_state_dict'])
 
     for epoch in range(initial_epoch, config["num_epoch"]):
         model.train()
@@ -95,7 +101,9 @@ def train_model(config):
 
             loss = loss_function(Proj_output.view(-1, tokenizer_tgt.get_vocab_size()), label.view(-1) ) #Convert it to (B * seq, vocab_size)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) #Weight clipping
             optimizer.step()
+            scheduler.step()
             optimizer.zero_grad()
             print(f"Epoch: {epoch}, Batch: {batch_idx}, Loss: {loss.item()}")
             global_step += 1
@@ -103,10 +111,9 @@ def train_model(config):
         model_filename = get_weights_file_path(config, f"{epoch:02d}")
         torch.save({
             "epoch": epoch,
-            "global_step": global_step,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
-
+            "scheduler_state_dict": scheduler.state_dict(),
         }, model_filename)
 
 if __name__ == '__main__':
