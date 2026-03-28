@@ -1,0 +1,18 @@
+# Model weights
+weights/
+*.pt
+*.pth
+*.bin
+*.ckpt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# DS_Store
+.DS_Store
