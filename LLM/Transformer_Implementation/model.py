@@ -75,9 +75,9 @@ class multiHeadAttention(nn.Module):
         super().__init__()
         self.d_model = d_model
         self.head = head
-        self.dropout = dropout
         assert d_model % head == 0 #Note, d_model % head == 0
         self.d_k = d_model // head
+        self.dropout = nn.Dropout(dropout)
 
         self.wQ = nn.Linear(d_model,d_model)
         self.wK = nn.Linear(d_model,d_model)
@@ -85,7 +85,7 @@ class multiHeadAttention(nn.Module):
         self.wO = nn.Linear(d_model,d_model)
 
     @staticmethod
-    def attention(q, k, v, d_k, mask=None, dropout=0.05):
+    def attention(q, k, v, d_k, mask=None, dropout=None):
             Score = (q @ k.transpose(2,3)) / math.sqrt(d_k)
             if mask is not None:
                 Score = Score.masked_fill(mask == 0, -1e8)
@@ -108,7 +108,7 @@ class multiHeadAttention(nn.Module):
         V = V.view(V.shape[0], V.shape[1], self.head, self.d_k)
         V = V.transpose(1, 2)
 
-        x, _ = self.attention(Q, K, V, self.d_k, mask)
+        x, _ = self.attention(Q, K, V, self.d_k, mask, self.dropout)
 
         #Return back to our shape
         x = x.transpose(1,2).contiguous() 

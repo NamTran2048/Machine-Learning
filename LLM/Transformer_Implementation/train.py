@@ -106,7 +106,6 @@ def train_model(config):
             scheduler.step()
             optimizer.zero_grad()
             print(f"Epoch: {epoch}, Batch: {batch_idx}, Loss: {loss.item()}")
-            global_step += 1
 
         model_filename = get_weights_file_path(config, f"{epoch:02d}")
         torch.save({
