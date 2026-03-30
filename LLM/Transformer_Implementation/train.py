@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 from datasets import load_dataset
 from tokenizers import Tokenizer
 from tokenizers.models import WordLevel # Actually tokenize
 from tokenizers.trainers import WordLevelTrainer #Create Vocab based on the sentences on the dataset
 from tokenizers.pre_tokenizers import Whitespace
 from pathlib import Path
-from dataset import TransformerDataset, decoder_mask
+from dataset import TransformerDataset
 
 from model import Model
 from config import get_weights_file_path, get_config
@@ -36,19 +36,25 @@ def get_data(config):
     tokenizer_src = buildTokenizer(config, dataset, config['lang_src']) 
     tokenizer_tgt = buildTokenizer(config, dataset, config['lang_tgt'])
 
-    #Keep 90% for training, 10% for validation
+    #Exclude really large sequences before splitting
+    excluded_ids = {87750, 20924, 56798, 91390, 19190, 19424, 20583, 17205,
+                    20719, 20883, 90111, 19425, 17318, 56568, 55710, 56863,
+                    21043, 20536, 56758, 17651, 91354, 73004, 49914, 17574,
+                    20350, 18911, 20596, 19642, 18939}
+    included_ids = [i for i in range(len(dataset)) if i not in excluded_ids]
+    dataset = Subset(dataset, included_ids)
 
-    dataset_train_size = int(0.9 * len(dataset))
+    #Keep 70% for training, 30% for validation
+    dataset_train_size = int(0.7 * len(dataset))
     dataset_eval_size = len(dataset) - dataset_train_size
     dataset_train_raw, dataset_eval_raw = random_split(dataset, [dataset_train_size, dataset_eval_size])
-
 
     #Actual dataset
     dataset_train = TransformerDataset(dataset_train_raw, tokenizer_src, tokenizer_tgt, config["lang_src"], config["lang_tgt"], config["seq_len"])
     dataset_eval = TransformerDataset(dataset_eval_raw, tokenizer_src, tokenizer_tgt, config["lang_src"], config["lang_tgt"], config["seq_len"])
 
     #Dataloader
-    train_dataloader = DataLoader(dataset_train, batch_size = config['batch_size'], shuffle = True)
+    train_dataloader = DataLoader(dataset_train, batch_size = config['batch_size'], shuffle = True, num_workers=5, pin_memory=True, persistent_workers=True)
     eval_dataloader = DataLoader(dataset_eval, batch_size = 1, shuffle = True)
 
     return train_dataloader, eval_dataloader, tokenizer_src, tokenizer_tgt

@@ -3,7 +3,8 @@ import torch.nn as nn
 import math
 
 """
-
+Modification not used by the tutorial video:
+1. RMSnorm
 """
 
 class inputEmbedding(nn.Module):
@@ -41,20 +42,14 @@ class positionalEncoder(nn.Module):
         return self.dropout(x)
     
 
-class layerNorm(nn.Module):
+class layerNorm(nn.Module): #RMS norm
 
     def __init__(self,d_model = 512):
         super().__init__()
-        self.eps = 10**-6
-        self.gamma = nn.Parameter(torch.ones(d_model))
-        self.beta = nn.Parameter(torch.zeros(d_model))
+        self.rms_norm = nn.RMSNorm(normalized_shape = d_model, eps = 1e-8, elementwise_affine=True)
 
     def forward(self, x):
-        mean = x.mean(dim=2, keepdim=True) #Size (batch, input_seq, 1)
-        std = x.std(dim=2, keepdim=True) #Size (batch, input_seq, 1)
-
-        x = (x - mean)/torch.sqrt(std**2 + self.eps)
-        return x * self.gamma + self.beta
+        return self.rms_norm(x)
 
 class ffn(nn.Module):
 

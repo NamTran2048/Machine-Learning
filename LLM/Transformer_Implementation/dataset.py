@@ -40,7 +40,7 @@ class TransformerDataset(Dataset):
                 self.sos_token,
                 torch.tensor(encoder_token, dtype=torch.int64),
                 self.eos_token,
-                torch.tensor([self.pad_token]* encoder_padding_token, dtype=torch.int64)
+                torch.tensor([self.pad_token.item()]* encoder_padding_token, dtype=torch.int64)
             ]
         )
 
@@ -48,7 +48,7 @@ class TransformerDataset(Dataset):
             [
                 self.sos_token,
                 torch.tensor(decoder_token, dtype=torch.int64),
-                torch.tensor([self.pad_token]* decoder_padding_token, dtype=torch.int64) 
+                torch.tensor([self.pad_token.item()]* decoder_padding_token, dtype=torch.int64)
             ]
         )
 
@@ -56,7 +56,7 @@ class TransformerDataset(Dataset):
             [
                 torch.tensor(decoder_token, dtype=torch.int64),
                 self.eos_token,
-                torch.tensor([self.pad_token]* decoder_padding_token, dtype=torch.int64)
+                torch.tensor([self.pad_token.item()]* decoder_padding_token, dtype=torch.int64)
             ]
 
         )
@@ -64,8 +64,8 @@ class TransformerDataset(Dataset):
         return {
             "encoder input": encoder_input, #(seq_length)
             "decoder input": decoder_input, 
-            "encoder mask": (encoder_input != self.pad_token).unsqueeze(0).unsqueeze(0).int(), #(1,1, seq)
-            "decoder mask": (decoder_input != self.pad_token).unsqueeze(0).unsqueeze(0).int() & decoder_mask(decoder_input.size(0)), #(1,1, seq)
+            "encoder mask": (encoder_input != self.pad_token.item()).unsqueeze(0).unsqueeze(0).int(), #(1,1, seq)
+            "decoder mask": (decoder_input != self.pad_token.item()).unsqueeze(0).unsqueeze(0).int() & decoder_mask(decoder_input.size(0)), #(1,1, seq)
             "label": label,
             "source text": src_text,
             "target text": tgt_text,

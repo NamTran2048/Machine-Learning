@@ -71,6 +71,12 @@ def translate(sentence, config):
 
 
 if __name__ == '__main__':
-    sentence = " A man should be independent ."
+    sentence = " A quiet, uneasy feeling came over me as I watched the shadows walk across the empty schoolroom . "
     config = get_config()
     translate(sentence, config)
+
+    #I found joy by doing what I love . --> Mi sono trovato con gioia quello che amo .
+    #I want to sleep tonight --> Voglio dormire nei campi .
+    #Women should have the right to be independent and educated. --> D ’ altra parte , la donna può essere indipendente e educato .
+    #I love food so much --> Ho bisogno di mangiare un tale che mi piace ?
+    #I beg for your forgiveness, sir . --> Vi prego soltanto di perdonare , signore .
