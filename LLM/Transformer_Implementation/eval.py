@@ -5,6 +5,8 @@ from train import get_sentence, buildTokenizer, get_model, buildTokenizer
 from config import get_config, get_weights_file_path
 from datasets import load_dataset
 
+
+
 def get_encoder_input(text, tokenizer_src, tokenizer_tgt, seq):
     sos_token = torch.tensor([tokenizer_src.token_to_id('[SOS]')], dtype=torch.int64)
     eos_token = torch.tensor([tokenizer_src.token_to_id('[EOS]')], dtype=torch.int64)
@@ -71,7 +73,7 @@ def translate(sentence, config):
 
 
 if __name__ == '__main__':
-    sentence = " A quiet, uneasy feeling came over me as I watched the shadows walk across the empty schoolroom . "
+    sentence = " I would rather sleep "
     config = get_config()
     translate(sentence, config)
 

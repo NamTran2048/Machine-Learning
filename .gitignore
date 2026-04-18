@@ -16,3 +16,6 @@ __pycache__/
 
 # DS_Store
 .DS_Store
+
+[alias]
+    lg = log --oneline --graph --all --decorate
